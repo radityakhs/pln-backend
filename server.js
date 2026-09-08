@@ -26,34 +26,13 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// Initialize database (non-fatal: app keeps running so we can see logs)
-let db = null
-try {
-  await initializeDb()
-  db = getDb()
-  console.log('✅ Database connected and tables initialized')
-} catch (err) {
-  console.error('❌ Database initialization failed:', err.message)
-  console.error('   Check env vars MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT')
-  console.error('   Server will start anyway — /api/health will report error status')
-}
-
-// Routes (only register if DB is available)
-if (db) {
-  app.use('/api/gallery', galleryRoutes(db))
-  app.use('/api/pillars', pillarsRoutes(db))
-  app.use('/api/events', eventsRoutes(db))
-  app.use('/api/upload', uploadRoutes)
-  app.use('/api/contact', contactRoutes(db))
-  app.use('/api/settings', settingsRoutes(db))
-}
-
 // Root endpoint for quick sanity check
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'PLN Profile Backend', see: '/api/health' })
 })
 
 // Health check (includes database connection test)
+let db = null
 app.get('/api/health', async (req, res) => {
   if (!db) {
     return res.status(503).json({
@@ -80,19 +59,43 @@ app.get('/api/health', async (req, res) => {
   }
 })
 
-// Auto-update event statuses on each events request
-if (db) {
-  app.use('/api/events', async (req, res, next) => {
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      await db.query('UPDATE events SET status = ? WHERE end_date < ? AND status = ?', ['past', today, 'upcoming'])
-    } catch (err) {
-      console.error('Failed to update event statuses:', err)
-    }
-    next()
+// Bootstrap: initialize DB and register routes (no top-level await so Hostinger's
+// CommonJS loader can require() this module)
+async function start() {
+  try {
+    await initializeDb()
+    db = getDb()
+    console.log('✅ Database connected and tables initialized')
+  } catch (err) {
+    console.error('❌ Database initialization failed:', err.message)
+    console.error('   Check env vars MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT')
+    console.error('   Server will start anyway — /api/health will report error status')
+  }
+
+  // Routes (only register if DB is available)
+  if (db) {
+    app.use('/api/gallery', galleryRoutes(db))
+    app.use('/api/pillars', pillarsRoutes(db))
+    app.use('/api/events', eventsRoutes(db))
+    app.use('/api/upload', uploadRoutes)
+    app.use('/api/contact', contactRoutes(db))
+    app.use('/api/settings', settingsRoutes(db))
+
+    // Auto-update event statuses on each events request
+    app.use('/api/events', async (req, res, next) => {
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        await db.query('UPDATE events SET status = ? WHERE end_date < ? AND status = ?', ['past', today, 'upcoming'])
+      } catch (err) {
+        console.error('Failed to update event statuses:', err)
+      }
+      next()
+    })
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Backend server running on port ${PORT}`)
   })
 }
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`)
-})
+start()
