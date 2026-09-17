@@ -23,8 +23,8 @@ export default function settingsRoutes(db) {
       const updates = req.body
       for (const [key, value] of Object.entries(updates)) {
         await db.query(
-          'UPDATE settings SET `value` = ? WHERE `key` = ?',
-          [String(value), key]
+          'INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
+          [key, String(value)]
         )
       }
       // Return updated settings

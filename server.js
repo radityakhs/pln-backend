@@ -6,6 +6,7 @@ import { initializeDb, getDb } from './db.js'
 import galleryRoutes from './routes/gallery.js'
 import pillarsRoutes from './routes/pillars.js'
 import eventsRoutes from './routes/events.js'
+import newsRoutes from './routes/news.js'
 import uploadRoutes from './routes/upload.js'
 import contactRoutes from './routes/contact.js'
 import settingsRoutes from './routes/settings.js'
@@ -17,14 +18,16 @@ const app = express()
 const PORT = process.env.PORT || 3001
 
 // Middleware
-// CORS: allow all origins sementara untuk testing (hapus setelah deploy)
-// Untuk produksi, ganti '*' dengan domain frontend yang spesifik
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+
+// Serve frontend static files (SPA build output)
+const frontendDistPath = path.join(__dirname, '../dist')
+app.use(express.static(frontendDistPath))
 
 // Root endpoint for quick sanity check
 app.get('/', (req, res) => {
@@ -60,7 +63,7 @@ app.get('/api/health', async (req, res) => {
 })
 
 // Bootstrap: initialize DB and register routes (no top-level await so Hostinger's
-// CommonJS loader can require() this module)
+// CommonJS loader can require() this module — see ERR_REQUIRE_ASYNC_MODULE fix)
 async function start() {
   try {
     await initializeDb()
@@ -77,6 +80,7 @@ async function start() {
     app.use('/api/gallery', galleryRoutes(db))
     app.use('/api/pillars', pillarsRoutes(db))
     app.use('/api/events', eventsRoutes(db))
+    app.use('/api/news', newsRoutes(db))
     app.use('/api/upload', uploadRoutes)
     app.use('/api/contact', contactRoutes(db))
     app.use('/api/settings', settingsRoutes(db))
@@ -92,6 +96,19 @@ async function start() {
       next()
     })
   }
+
+  // SPA fallback: for any non-API route, serve index.html
+  // This enables React Router to handle client-side routing (including /admin routes)
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found' })
+    }
+    res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+      if (err) {
+        res.status(404).json({ error: 'Frontend not found. Run npm run build and upload dist/ folder.' })
+      }
+    })
+  })
 
   app.listen(PORT, () => {
     console.log(`Backend server running on port ${PORT}`)

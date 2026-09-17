@@ -295,6 +295,23 @@ export async function initializeDb() {
     }
   }
 
+  // Migration: update existing events with empty descriptions
+  const descriptionsMap = {
+    'Green Future Powered Today': 'Pengembangan ekosistem energi bersih melalui demo memasak kompor induksi bersama komunitas lokal.',
+    'Electrifying Cooking Masterclass': 'Pelatihan khusus bagi pelaku UMKM Saumlaki dalam mengoptimalkan efisiensi dapur berbasis induksi.',
+    'Saumlaki Clean Energy Foodfest': 'Pameran bazar kuliner ramah lingkungan dengan keikutsertaan puluhan tenant UMKM binaan.',
+    'Hari Pelanggan Nasional': 'Layanan jemput bola dan asistensi pemasangan baru secara langsung di lokasi pelanggan.',
+    'Inspeksi Instalasi Gratis': 'Kunjungan teknisi langsung ke rumah pelanggan untuk memastikan keamanan jaringan listrik internal.',
+    'Smart Power Management': 'Kemudahan kontrol dan pemantauan daya listrik secara fleksibel sesuai kebutuhan event.',
+    'Sentra Kuliner PLN4U': 'Dukungan infrastruktur kelistrikan bagi pelaku usaha kecil Saumlaki untuk tumbuh bersama.',
+  }
+  for (const [title, desc] of Object.entries(descriptionsMap)) {
+    await pool.query(
+      'UPDATE events SET description = ? WHERE title = ? AND (description IS NULL OR description = ?)',
+      [desc, title, '']
+    )
+  }
+
   // Create settings table
   await pool.query(`
     CREATE TABLE IF NOT EXISTS settings (
@@ -320,6 +337,113 @@ export async function initializeDb() {
       await pool.query(
         'INSERT INTO settings (`key`, `value`, `description`) VALUES (?, ?, ?)',
         [s.key, s.value, s.description]
+      )
+    }
+  }
+
+  // Seed contact settings (idempotent: INSERT IGNORE keeps existing admin-edited values)
+  const contactSettings = [
+    { key: 'contact_center_number', value: '123', description: 'Contact center number shown in Customer Service modal' },
+    { key: 'contact_center_url', value: 'tel:123', description: 'Contact center link (e.g. tel:123)' },
+    { key: 'whatsapp_number', value: '0812-3456-7890', description: 'WhatsApp number shown in Customer Service modal' },
+    { key: 'whatsapp_url', value: 'https://wa.me/6281234567890', description: 'WhatsApp link (e.g. https://wa.me/6281234567890)' },
+    { key: 'instagram_username', value: '@pln.saumlaki', description: 'Instagram username shown in Customer Service modal' },
+    { key: 'instagram_url', value: 'https://www.instagram.com/pln.saumlaki/', description: 'Instagram profile URL' },
+  ]
+  for (const s of contactSettings) {
+    await pool.query(
+      'INSERT IGNORE INTO settings (`key`, `value`, `description`) VALUES (?, ?, ?)',
+      [s.key, s.value, s.description]
+    )
+  }
+
+  // Create maluku_news table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS maluku_news (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      link VARCHAR(500) NOT NULL,
+      pub_date DATETIME NOT NULL,
+      source VARCHAR(100) NOT NULL,
+      thumbnail VARCHAR(500),
+      category VARCHAR(100)
+    )
+  `)
+
+  // Seed default Maluku News if empty
+  const [newsRows] = await pool.query('SELECT COUNT(*) as count FROM maluku_news')
+  if (newsRows[0].count === 0) {
+    const defaultMalukuNews = [
+      {
+        title: 'PLN4U Saumlaki Perkuat Layanan Kelistrikan Berbasis Komunitas',
+        description: 'PLN4U Saumlaki menghadirkan layanan kelistrikan yang lebih dekat dengan masyarakat melalui pendekatan komunitas, edukasi, dan kemudahan akses informasi dalam satu platform digital.',
+        link: '/news',
+        pub_date: '2026-09-01 09:00:00',
+        source: 'Maluku News',
+        thumbnail: '/images/about.png',
+        category: 'Layanan',
+      },
+      {
+        title: 'Program 4 Pilar Utama Layanan Hadirkan Pengalaman Listrik Lebih Dekat',
+        description: 'Empat pilar utama layanan PLN4U Saumlaki dirancang untuk menjawab kebutuhan pelanggan, mulai dari pengalaman layanan, kunjungan langsung, ketenangan daya, hingga pertumbuhan bersama masyarakat.',
+        link: '/news',
+        pub_date: '2026-08-20 10:30:00',
+        source: 'Maluku News',
+        thumbnail: '/images/card1.jpg',
+        category: 'Program',
+      },
+      {
+        title: 'PLN UP3 Saumlaki Dukung UMKM Lokal Melalui Energi Bersih',
+        description: 'Dukungan infrastruktur dan pendampingan layanan kelistrikan terus diperkuat agar pelaku UMKM di Saumlaki dapat beroperasi lebih produktif, aman, dan berkelanjutan.',
+        link: '/news',
+        pub_date: '2026-08-08 08:15:00',
+        source: 'Maluku News',
+        thumbnail: '/images/card2.jpg',
+        category: 'UMKM',
+      },
+      {
+        title: 'Layanan Contact Center PLN4U Saumlaki Semakin Mudah Diakses',
+        description: 'Informasi layanan pelanggan kini dapat diakses lebih praktis melalui Contact Center, WhatsApp, dan kanal digital PLN4U Saumlaki untuk membantu menjawab kebutuhan informasi kelistrikan.',
+        link: '/news',
+        pub_date: '2026-07-29 14:45:00',
+        source: 'Maluku News',
+        thumbnail: '/images/card3.jpg',
+        category: 'Kontak',
+      },
+      {
+        title: 'Infrastruktur Jaringan Listrik Saumlaki Terus Diperkuat',
+        description: 'Penguatan jaringan listrik di Saumlaki dilakukan untuk mendukung keandalan pasokan, aktivitas masyarakat, serta pertumbuhan layanan publik dan ekonomi daerah.',
+        link: '/news',
+        pub_date: '2026-07-12 11:20:00',
+        source: 'Maluku News',
+        thumbnail: '/images/bt_1.png',
+        category: 'Infrastruktur',
+      },
+      {
+        title: 'Masyarakat Saumlaki Antusias Ikuti Edukasi Keselamatan Kelistrikan',
+        description: 'Edukasi keselamatan kelistrikan kepada masyarakat difokuskan pada penggunaan perangkat listrik yang aman, pencegahan gangguan, serta peningkatan pemahaman layanan PLN.',
+        link: '/news',
+        pub_date: '2026-06-25 13:10:00',
+        source: 'Maluku News',
+        thumbnail: '/images/bt_2.png',
+        category: 'Edukasi',
+      },
+      {
+        title: 'PLN Mobile Jadi Akses Utama Layanan Kelistrikan Masyarakat',
+        description: 'PLN Mobile membantu pelanggan mengakses berbagai layanan kelistrikan seperti informasi tagihan, pembelian token, pengaduan, dan layanan digital lainnya dengan lebih cepat.',
+        link: '/news',
+        pub_date: '2026-06-02 16:00:00',
+        source: 'Maluku News',
+        thumbnail: '/images/pln_mobile.png',
+        category: 'Digital',
+      },
+    ]
+
+    for (const n of defaultMalukuNews) {
+      await pool.query(
+        'INSERT INTO maluku_news (title, description, link, pub_date, source, thumbnail, category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [n.title, n.description, n.link, n.pub_date, n.source, n.thumbnail, n.category]
       )
     }
   }
