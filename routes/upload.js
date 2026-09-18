@@ -33,7 +33,23 @@ const upload = multer({
 
 const router = Router()
 
-router.post('/', upload.single('image'), (req, res) => {
+// multer (and our fileFilter) report failures via an `err` callback rather than
+// throwing, so without this wrapper Express falls back to its default HTML error
+// page — the frontend's `res.json()` then throws on the malformed body and the
+// real reason (file too large, wrong type, etc.) never reaches the user.
+function withUploadErrorHandling(multerMiddleware) {
+  return (req, res, next) => {
+    multerMiddleware(req, res, (err) => {
+      if (!err) return next()
+      if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'Ukuran file maksimal 10MB' })
+      }
+      return res.status(400).json({ error: err.message || 'Upload gagal' })
+    })
+  }
+}
+
+router.post('/', withUploadErrorHandling(upload.single('image')), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' })
   }
@@ -45,7 +61,7 @@ router.post('/', upload.single('image'), (req, res) => {
   })
 })
 
-router.post('/multiple', upload.array('images', 10), (req, res) => {
+router.post('/multiple', withUploadErrorHandling(upload.array('images', 10)), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' })
   }
