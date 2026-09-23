@@ -378,7 +378,7 @@ export async function initializeDb() {
       {
         title: 'PLN4U Saumlaki Perkuat Layanan Kelistrikan Berbasis Komunitas',
         description: 'PLN4U Saumlaki menghadirkan layanan kelistrikan yang lebih dekat dengan masyarakat melalui pendekatan komunitas, edukasi, dan kemudahan akses informasi dalam satu platform digital.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-09-01 09:00:00',
         source: 'Maluku News',
         thumbnail: '/images/about.png',
@@ -387,7 +387,7 @@ export async function initializeDb() {
       {
         title: 'Program 4 Pilar Utama Layanan Hadirkan Pengalaman Listrik Lebih Dekat',
         description: 'Empat pilar utama layanan PLN4U Saumlaki dirancang untuk menjawab kebutuhan pelanggan, mulai dari pengalaman layanan, kunjungan langsung, ketenangan daya, hingga pertumbuhan bersama masyarakat.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-08-20 10:30:00',
         source: 'Maluku News',
         thumbnail: '/images/card1.jpg',
@@ -396,7 +396,7 @@ export async function initializeDb() {
       {
         title: 'PLN UP3 Saumlaki Dukung UMKM Lokal Melalui Energi Bersih',
         description: 'Dukungan infrastruktur dan pendampingan layanan kelistrikan terus diperkuat agar pelaku UMKM di Saumlaki dapat beroperasi lebih produktif, aman, dan berkelanjutan.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-08-08 08:15:00',
         source: 'Maluku News',
         thumbnail: '/images/card2.jpg',
@@ -405,7 +405,7 @@ export async function initializeDb() {
       {
         title: 'Layanan Contact Center PLN4U Saumlaki Semakin Mudah Diakses',
         description: 'Informasi layanan pelanggan kini dapat diakses lebih praktis melalui Contact Center, WhatsApp, dan kanal digital PLN4U Saumlaki untuk membantu menjawab kebutuhan informasi kelistrikan.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-07-29 14:45:00',
         source: 'Maluku News',
         thumbnail: '/images/card3.jpg',
@@ -414,7 +414,7 @@ export async function initializeDb() {
       {
         title: 'Infrastruktur Jaringan Listrik Saumlaki Terus Diperkuat',
         description: 'Penguatan jaringan listrik di Saumlaki dilakukan untuk mendukung keandalan pasokan, aktivitas masyarakat, serta pertumbuhan layanan publik dan ekonomi daerah.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-07-12 11:20:00',
         source: 'Maluku News',
         thumbnail: '/images/bt_1.png',
@@ -423,7 +423,7 @@ export async function initializeDb() {
       {
         title: 'Masyarakat Saumlaki Antusias Ikuti Edukasi Keselamatan Kelistrikan',
         description: 'Edukasi keselamatan kelistrikan kepada masyarakat difokuskan pada penggunaan perangkat listrik yang aman, pencegahan gangguan, serta peningkatan pemahaman layanan PLN.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-06-25 13:10:00',
         source: 'Maluku News',
         thumbnail: '/images/bt_2.png',
@@ -432,7 +432,7 @@ export async function initializeDb() {
       {
         title: 'PLN Mobile Jadi Akses Utama Layanan Kelistrikan Masyarakat',
         description: 'PLN Mobile membantu pelanggan mengakses berbagai layanan kelistrikan seperti informasi tagihan, pembelian token, pengaduan, dan layanan digital lainnya dengan lebih cepat.',
-        link: '/news',
+        link: '/berita',
         pub_date: '2026-06-02 16:00:00',
         source: 'Maluku News',
         thumbnail: '/images/pln_mobile.png',
